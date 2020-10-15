@@ -18,30 +18,32 @@ namespace MarketBrowser
             InitializeComponent();
         }
 
-        private string[] parseCSVLine(string lines)
+        private string[] parseCSVLine(string lines) // parsing 핵심 함수
         {
-            string[] result = lines.Split(',');
-            for (int j = 0; j < result.Length; j++)
+            string[] result = lines.Split(',');     // 받아온 lines를 ',' 기준으로 나누어 result 배열에 저장
+            for (int j = 0; j < result.Length; j++)    //  result를 돌면서
             {
-                if (result[j].Contains('"'))
+                if (result[j].Contains('"'))	//  더블퀘테이션(")을 만나면
                 {
-                    for (int k = j + 1; k < result.Length; k++)
+                    result[j] = result[j].Remove(0, 1); // "을 제거
+                    for (int k = j + 1; k < result.Length; k++) 	// 한 번 더 " 을 찾기 위해 반복
                     {
-                        result[j] += result[k];
+                        result[j] += result[k]; 	// 반복하면서 string을 합쳐줍니다
 
-                        if (result[k].Contains('"'))
-                        {
+                        if (result[k].Contains('"')) 	// 현재 방문한 배열에 "가 있다면(짝이 될" 을 찾았다면)
+                        { 	// 배열을 삭제하기 위해 임시로 List에 넣어서 삭제 후 반환해줍니다
+                            result[j] = result[j].Substring(0, result[j].Length - 1); // 맨뒤에 있는 "을 제거
                             List<string> tmp = new List<string>(result);
-                            for (int h = j + 1; h < k + 1; h++)
-                                tmp.RemoveAt(h);
-                            result = tmp.ToArray();
+                            for (int h = j + 1; h < k + 1; h++) 	// j+1부터 k까지
+                                tmp.RemoveAt(h); 	// 하나씩 삭제
+                            result = tmp.ToArray(); // 그 후 result에 배열로 바꾸어 반환 
                             break;
                         }
                     }
-                }
-            }
+                } // 짝이 될 ” 가 있는 곳까지 삭제하였으므로 j+1부터 다시 반복
+            }	// 전부 순회가 완료되면
 
-            return result;
+            return result;   // 결과값으로 result를 넘겨줍니다
         }
 
         private List<List<string>> MakeColumnarDataStructure()
@@ -58,8 +60,7 @@ namespace MarketBrowser
             {
                 List<string> list = new List<string>();
                 list.Add(header);
-
-                data.Add(list);
+                              data.Add(list);
             }
 
             while (sr.EndOfStream == false)
@@ -153,7 +154,7 @@ namespace MarketBrowser
         {
             List<List<string>> data = MakeRowbaseDataStructure();
             printRowData_rowbased(data);
-            printColumnData_rowbased(data, 5);
+            //printColumnData_rowbased(data, 5);
 
             //List<List<string>> data = MakeColumnarDataStructure();
             //printColumnData_columnbased(data, 1);
