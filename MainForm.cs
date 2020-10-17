@@ -105,12 +105,30 @@ namespace MarketBrowser
             textBoxCSVView.Text = str;
         }
 
-        private List<List<string>> MakeRowbaseDataStructure()
+        Dictionary<string, int> headerIndexDict = new Dictionary<string, int>();
+
+        private void SetHeaderList(string header)
         {
-            StreamReader sr = new StreamReader(new FileStream("market.csv", FileMode.Open), Encoding.Default);
+            var values = parseCSVLine(header);
+            listBoxHeaders.Items.Clear();
+
+            for(int i = 0; i < values.Length; i++)
+            {
+                string column = values[i];
+                listBoxHeaders.Items.Add(column);
+                headerIndexDict[column] = i;
+            }    
+
+        }
+
+        private List<List<string>> MakeRowbaseDataStructure(string filename)
+        {
+            StreamReader sr = new StreamReader(new FileStream(filename, FileMode.Open), Encoding.Default);
 
 
-            string lines = "";
+            string lines = sr.ReadLine();
+            SetHeaderList(lines);
+
 
             List<List<string>> data = new List<List<string>>();
 
@@ -125,7 +143,7 @@ namespace MarketBrowser
             sr.Close();
             return data;
         }
-        private void printRowData_rowbased(List<List<string>> data)
+        private void printRowData_rowbased(List<List<string>> data, TextBox textBox)
         {
             string str = "";
             foreach(List<string> rowlist in data)
@@ -136,7 +154,7 @@ namespace MarketBrowser
                 }
                 str += "\r\n";
             }
-            textBoxCSVView.Text = str;
+            textBox.Text = str;
         }
         private void printColumnData_rowbased(List<List<string>> data, int index)
         {
@@ -150,15 +168,79 @@ namespace MarketBrowser
             textBoxCSVView.Text = str;
         }
 
-        private void Button1_Click(object sender, EventArgs e)
+        List<List<string>> data;
+
+        private void ButtonOpenCSV_Click(object sender, EventArgs e)
         {
-            List<List<string>> data = MakeRowbaseDataStructure();
-            printRowData_rowbased(data);
+            var FD = new OpenFileDialog();
+            DialogResult dResult = FD.ShowDialog();
+
+            if (dResult == DialogResult.OK)
+            {
+                string filename = FD.FileName;
+                data = MakeRowbaseDataStructure(filename);
+                printRowData_rowbased(data, textBoxCSVView);
+            }
+
             //printColumnData_rowbased(data, 5);
 
             //List<List<string>> data = MakeColumnarDataStructure();
             //printColumnData_columnbased(data, 1);
             //printRowData_columnbased(data);
+        }
+
+        private void DoSearch(string keyword, string column)
+        {
+            // 1. 대상 컬럼 확인
+            // int targetColumnIndex = listBoxHeaders.SelectedIndex; 
+            if(headerIndexDict.ContainsKey(column) == false)
+            {
+                MessageBox.Show("검색 대상 컬럼을 입력하세요.", "확인");
+                return;
+            }
+
+            int targetColumnIndex = headerIndexDict[column];
+
+
+            // 2. 대상 컬럼에서 키워드를 포함하는지 확인
+            List<List<string>> resultdata = new List<List<string>>();
+            foreach (List<string> row in data)
+            {
+                string value = row[targetColumnIndex];
+                if(value.Contains(keyword))
+                {
+                    resultdata.Add(row);
+                }
+            }
+
+            printRowData_rowbased(resultdata, textBoxSearchResult);
+        }
+
+        private void buttonSearch_Click(object sender, EventArgs e)
+        {
+            string keyword = textBoxSearch.Text;
+
+            if (keyword == "")
+            {
+                MessageBox.Show("검색 키워드를 입력하세요.", "확인");
+                return;
+            }
+
+            if(listBoxHeaders.SelectedItem == null)
+            {
+                MessageBox.Show("검색 대상 컬럼을 입력하세요.", "확인");
+                return;
+            }
+            string column = listBoxHeaders.SelectedItem.ToString();
+            if(column == "")
+            {
+                MessageBox.Show("검색 대상 컬럼을 입력하세요.", "확인");
+                return;
+            }
+            MessageBox.Show("키워드 = " + keyword + "  컬럼 = " + column, "확인");
+
+            DoSearch(keyword, column);
+
         }
     }
 }
